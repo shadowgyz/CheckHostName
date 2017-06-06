@@ -1,6 +1,3 @@
-#Questions/comments/improvements?
-#Contact justin.maatubang.ctr@usmc.mil
- 
 Import-Module ActiveDirectory
 $menu = 1
  
