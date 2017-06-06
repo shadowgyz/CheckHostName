@@ -1,0 +1,570 @@
+#Questions/comments/improvements?
+#Contact justin.maatubang.ctr@usmc.mil
+ 
+Import-Module ActiveDirectory
+$menu = 1
+ 
+do
+{
+    Write-Host "1) Instance Name/Computer Checker (Command Line)"
+    Write-Host "2) Instance Name Report Generator"
+    Write-Host "3) Security Group/User Name Checker (Command Line)"
+    Write-Host "4) Security Group Report Generator"
+    Write-Host "5) Security Group Member Checker (Command Line)"
+    Write-Host "6) Exit Script"
+    $usersel = Read-Host "Which script would you like to run (1-6)?"
+ 
+#########Script Number One
+    if ($usersel -eq 1)
+    {
+        Cls
+        $runner = 1
+ 
+        Do
+        {
+            $name = Read-host 'What is the computer name? When finished,
+type the word END.'
+ 
+            if($name -eq "END")
+            {
+            $runner = 0
+            }
+ 
+            # If the User inputs a valid Computer Name, then run the search.
+            elseif(($name.Contains("PNDL")) -or ($name.Contains("MRMR")) -or
+($name.Contains("YUMA")) -or ($name.Contains("PLMS")) -or
+($name.Contains("BSTW")) -or ($name.Contains("BDGP")) -or
+($name.Contains("RDSD")))
+            {
+                $objResult = Get-ADComputer -Filter {name -eq $name}
+-Properties MemberOf
+                if($objResult -eq $null)
+                {
+                    Write-Host ($name + " is not a valid machine name.")
+                    $runner = 1
+                }
+                else
+                {
+                    Write-Host($name + " has the following software
+associated.")
+                    $objResult | foreach {
+                        $objInstances = $objResult.MemberOf
+                        foreach($objInstance in $objInstances)
+                        {
+                            $objInstanceItems = $objInstance.Split(",")
+                            $tmp = $objInstanceItems[0].Substring(3)
+                            if ($tmp -match '_._')
+                            {
+                                $tmp1 = $tmp.ToUpper()
+                                $repchar = $matches[0].Substring(1,1)
+                                $tmp1 = $tmp1.Replace(      ('A_MCBPAC_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace( ('A_MCAS_CAMPEN_' +
+$repchar), $repchar)
+                                     $tmp1 = $tmp1.Replace(('A_MCAS MIRAMAR_'
++ $repchar), $repchar)
+                             $tmp1 = $tmp1.Replace(   ('A_MCAS YUMA_'
++ $repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_MCB CAMPEN_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_MCB HAWAII_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(      ('A_MCFPAC_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_1ST R BN_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_HQ SVCBN_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(       ('A_I MEF_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_11TH MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_13TH MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_15TH MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_1ST FSSG_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_1ST MARDIV_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_3RD MAW_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_III MEF_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_1ST MAW_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_31ST MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_3RD MARDIV_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_3RD MEB_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_3RD MLG_' +
+$repchar), $repchar)
+                                $objInstanceName = $tmp1
+                            }
+                            else
+                            {
+                                $objInstanceName = $tmp
+                            }
+                            Write-Host $objInstanceName
+                        }
+                  }
+               }               
+            }
+ 
+            else
+            {
+            write-Host($name + " is not a valid machine name.")
+               $runner = 1
+            }
+        }
+        While ($runner -eq 1)
+ 
+        clear       
+    }
+ 
+#########Script Number Two   
+    elseif ($usersel -eq 2)
+    {
+        $numchk = 0
+        do
+        {
+            [int]$computernumber = Read-Host "How many machines do you need
+Instance Names from?"
+            if ($computernumber -le 0)
+            {
+                $numchk = 0
+                Write-Host "Invalid input."
+            }
+            elseif ($computernumber -gt 0)
+            {
+             $numchk = 1
+                Write-Host "Great!"
+            }
+            else
+            {
+                $numchk = 0
+                Write-Host "Invalid input."
+            }
+        } while ($numchk -eq 0)
+ 
+ 
+        Write-Host "Input all computer names, pressing the ENTER (Return)
+key inbetween names."
+        Write-Warning "Make sure you input the computer names correctly!
+This script cannot check for incorrectly inputted computer names!"
+ 
+        $arraycount = 0
+        $computernames = @()
+ 
+        for ($arraycount = 0; $arraycount -lt $computernumber;
+$arraycount++)
+        {
+         $computernames += Read-Host
+        }
+ 
+        $date = Get-Date -F "yyyyMMMdd_HHmm"
+        $filename = "H:\InstanceNameReport_" + $date + ".csv"
+ 
+        [int]$arraycounter = 0
+        $report = @()
+        Write-Host ("Reading " + $computernumber + " computer name(s).")
+        do
+        {
+            $name = $computernames[$arraycounter]
+ 
+            $objResult = Get-ADComputer -Filter {name -eq $name} -Properties
+MemberOf
+ 
+            $objResult | foreach {
+ 
+                $computerName = $_.Name
+ 
+                $objInstances = $objResult.MemberOf
+                foreach($objInstance in $objInstances)
+             {
+                    $temp = New-Object PSObject
+                    if ($objInstance)
+                    {
+                    $objInstanceItems = $objInstance.Split(",")
+                        $tmp = $objInstanceItems[0].Substring(3)
+                        if ($tmp -match '_._')
+                        {
+                            $tmp1 = $tmp.ToUpper()
+                            $repchar = $matches[0].Substring(1,1)
+                            $tmp1 = $tmp1.Replace(      ('A_MCBPAC_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace( ('A_MCAS_CAMPEN_' +
+$repchar), $repchar)
+                             $tmp1 = $tmp1.Replace(('A_MCAS MIRAMAR_'
++ $repchar), $repchar)
+                             $tmp1 = $tmp1.Replace(   ('A_MCAS YUMA_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_MCB CAMPEN_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_MCB HAWAII_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(      ('A_MCFPAC_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_1ST R BN_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_HQ SVCBN_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(       ('A_I MEF_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_11TH MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_13TH MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_15TH MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_1ST FSSG_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_1ST MARDIV_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_3RD MAW_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_III MEF_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_1ST MAW_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_31ST MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_3RD MARDIV_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_3RD MEB_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_3RD MLG_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(        ('A_MRMR_' +
+$repchar), $repchar)
+                            $objInstanceName = $tmp1
+                        }
+                        else
+                        {
+                            $objInstanceName = $tmp
+                        }              
+                        $temp | Add-Member NoteProperty 'ComputerName'
+$($computername)
+                        $temp | Add-Member NoteProperty 'InstanceName'
+$($objInstanceName)
+                        $report += $temp
+                        $instanceCount += 1
+                    }
+                }
+            }
+        $arraycounter = $arraycounter + 1
+        } while ($arraycounter -lt $computernumber)
+ 
+ 
+        $report | Export-CSV -notypeinformation $filename
+        Write-Host ("Your report is ready at " + $filename)
+ 
+        $ender = Read-Host "Press ENTER to exit."
+ 
+        clear
+    }
+ 
+#########Script Number Three   
+    elseif ($usersel -eq 3)
+    {
+        Cls
+        $runner = 1
+ 
+        Do
+        {
+            Write-Host "What is the username (first.last, or
+first.mi.last)?"
+            $name = Read-host 'When finished, type the word END.'
+ 
+            if($name -eq "END")
+            {
+            $runner = 0
+            }
+ 
+            elseif(($name.Contains(".")))
+            {
+                $objResult = Get-ADUser -Filter {name -eq $name} -Properties
+MemberOf
+                if($objResult -eq $null)
+                {
+                    Write-Host ($name + " is not a valid username.")
+                    $runner = 1
+                }
+                else
+                {
+                    Write-Host("User " + $name + " is in the following
+groups.")
+                    $objResult | foreach {
+                        $objInstances = $objResult.MemberOf
+                        foreach($objInstance in $objInstances)
+                        {
+                            $objInstanceItems = $objInstance.Split(",")
+                            $tmp = $objInstanceItems[0].Substring(3)
+                            if ($tmp -match '_._')
+                            {
+                                $tmp1 = $tmp.ToUpper()
+                                $repchar = $matches[0].Substring(1,1)
+                                $tmp1 = $tmp1.Replace(      ('A_MCBPAC_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace( ('A_MCAS_CAMPEN_' +
+$repchar), $repchar)
+                                     $tmp1 = $tmp1.Replace(('A_MCAS MIRAMAR_'
++ $repchar), $repchar)
+                             $tmp1 = $tmp1.Replace(   ('A_MCAS YUMA_'
++ $repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_MCB CAMPEN_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_MCB HAWAII_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(      ('A_MCFPAC_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_1ST R BN_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_HQ SVCBN_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(       ('A_I MEF_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_11TH MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_13TH MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_15TH MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_1ST FSSG_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_1ST MARDIV_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_3RD MAW_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_III MEF_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_1ST MAW_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(    ('A_31ST MEU_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(  ('A_3RD MARDIV_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_3RD MEB_' +
+$repchar), $repchar)
+                                $tmp1 = $tmp1.Replace(     ('A_3RD MLG_' +
+$repchar), $repchar)
+                                $objInstanceName = $tmp1
+                            }
+                            else
+                            {
+                                $objInstanceName = $tmp
+                            }
+                            Write-Host $objInstanceName
+                       }
+                  }
+               }               
+            }     
+ 
+            else
+            {
+            write-Host($name + " is not a valid username.")
+               $runner = 1
+            }
+        }
+        While ($runner -eq 1)
+ 
+        clear
+    }
+ 
+#########Script Number Four   
+    elseif ($usersel -eq 4)
+    {
+        $numchk = 0
+        do
+        {
+            [int]$usernumber = Read-Host "How many users do you need
+Security Groups from?"
+            if ($usernumber -le 0)
+            {
+                $numchk = 0
+                Write-Host "Invalid input."
+            }
+            elseif ($usernumber -gt 0)
+            {
+             $numchk = 1
+                Write-Host "Great!"
+            }
+            else
+            {
+                $numchk = 0
+                Write-Host "Invalid input."
+            }
+        } while ($numchk -eq 0)
+ 
+        Write-Host "Input all usernames (first.last or first.mi.last),
+pressing the ENTER (Return) key inbetween names."
+        Write-Warning "Make sure you input the usernames correctly! This
+script cannot check for incorrectly inputted usernames!"
+ 
+        $arraycount = 0
+        $usernames = @()
+ 
+        for ($arraycount = 0; $arraycount -lt $usernumber; $arraycount++)
+        {
+         $usernames += Read-Host
+        }
+ 
+        $date = Get-Date -F "yyyyMMMdd_HHmm"
+        $filename = "H:\UserNameReport_" + $date + ".csv"
+ 
+        [int]$arraycounter = 0
+        $report = @()
+        Write-Host ("Reading " + $usernumber + " username(s).")
+        do
+        {
+            $name = $usernames[$arraycounter]
+ 
+            $objResult = Get-ADUser -Filter {name -eq $name} -Properties
+MemberOf
+ 
+            $objResult | foreach {
+ 
+                $UserName = $_.Name
+ 
+                $objInstances = $objResult.MemberOf
+                foreach($objInstance in $objInstances)
+             {
+                    $temp = New-Object PSObject
+                    if ($objInstance)
+                    {
+                    $objInstanceItems = $objInstance.Split(",")
+                        $tmp = $objInstanceItems[0].Substring(3)
+                        if ($tmp -match '_._')
+                        {
+                            $tmp1 = $tmp.ToUpper()
+                            $repchar = $matches[0].Substring(1,1)
+                            $tmp1 = $tmp1.Replace(      ('A_MCBPAC_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace( ('A_MCAS_CAMPEN_' +
+$repchar), $repchar)
+                             $tmp1 = $tmp1.Replace(('A_MCAS MIRAMAR_'
++ $repchar), $repchar)
+                             $tmp1 = $tmp1.Replace(   ('A_MCAS YUMA_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_MCB CAMPEN_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_MCB HAWAII_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(      ('A_MCFPAC_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_1ST R BN_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_HQ SVCBN_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(       ('A_I MEF_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_11TH MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_13TH MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_15TH MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_1ST FSSG_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_1ST MARDIV_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_3RD MAW_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_III MEF_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_1ST MAW_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(    ('A_31ST MEU_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(  ('A_3RD MARDIV_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_3RD MEB_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(     ('A_3RD MLG_' +
+$repchar), $repchar)
+                            $tmp1 = $tmp1.Replace(        ('A_MRMR_' +
+$repchar), $repchar)
+                            $objInstanceName = $tmp1
+                        }
+                        else
+                        {
+                            $objInstanceName = $tmp
+                        }              
+                        $temp | Add-Member NoteProperty 'UserName'
+$($UserName)
+                        $temp | Add-Member NoteProperty 'InstanceName'
+$($objInstanceName)
+                        $report += $temp
+                        $instanceCount += 1
+                    }
+                }
+            }
+        $arraycounter = $arraycounter + 1
+        } while ($arraycounter -lt $usernumber)
+ 
+        $report | Export-CSV -notypeinformation $filename
+        Write-Host ("Your report is ready at " + $filename)
+ 
+        $ender = Read-Host "Press ENTER to exit this script"
+ 
+        clear
+    }   
+ 
+#########Script Number Five   
+    elseif ($usersel -eq 5)
+    {
+        Cls
+        $runner = 1
+ 
+        Do
+        {
+            Write-Host "This script lists members of both Security Groups
+and Distribution Lists."
+            Write-Host "What is the name of the group you want to check the
+members of?"
+            $name = Read-Host 'When finished, type the word END.'
+ 
+            if($name -eq "END")
+            {
+                $runner = 0
+            }
+ 
+            elseif( ($name.Contains("M_")) -or ($name.Contains("W_")) -or
+($name.Contains("3_")) )
+            {
+                Write-Warning "Due to the nature of Active Directory, this
+may take a long time to load. Please be patient."
+                write-Host("These users are in the " + $name + " group.")
+                Get-ADGroupMember $name -recursive | Select-Object name
+                $runner = 1               
+            }
+ 
+            else
+            {
+                Write-Host ($name + " is not a valid group name.")
+                $runner = 1
+            }
+        }
+        While ($runner -eq 1)
+ 
+        clear
+    }
+ 
+#########Script Number Six   
+    elseif ($usersel -eq 6)
+    {
+        Read-Host "Press ENTER to exit."
+        $menu = 0
+    }
+ 
+#########Invalid Input   
+    else
+    {
+        clear
+        cls
+        Write-Host "Invalid input."
+    }   
+ 
+} while ($menu -eq 1)
